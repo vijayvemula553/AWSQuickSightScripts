@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Stack for creating a simple DataSource and DataSet resource.
+Resources:
+  testBaseDataSource:
+    Type: 'AWS::QuickSight::DataSource'
+    Properties:
+      AwsAccountId: !Sub "${AWS::AccountId}"
+      DataSourceId: !Join
+        - "-"
+        - - "cfn-test-test-datasource"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Name: !Join
+        - "-"
+        - - "cfn-test-test-datasource"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      DataSourceParameters:
+        MySqlParameters:
+          Host: ''
+          Database: ''
+          Port: 
+      Credentials:
+        CredentialPair:
+          Username: '{{resolve:secretsmanager:MySQLtest:SecretString:username}}' ## Decided to maintain secret within individual accounts
+          Password: '{{resolve:secretsmanager:MySQLtest:SecretString:password}}' ## as it is easier to scale and maintain these secrets
+      Type: 'MYSQL'
+      SslProperties:
+        DisableSsl: false
+      Tags:
+        - Key: 'test-key'
+          Value: 'test-value'
+
+  testDataSet:
+    Type: 'AWS::QuickSight::DataSet'
+    Properties:
+      AwsAccountId: !Sub "${AWS::AccountId}"
+      DataSetId: !Join
+        - "-"
+        - - "cfn-test-dataset"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      Name: !Join
+        - "-"
+        - - "cfn-test-dataset"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
+      ImportMode: SPICE
+      DataSetRefreshProperties:
+        RefreshConfiguration:
+          IncrementalRefresh:
+            LookbackWindow:
+              Size: 10
+              SizeUnit: WEEK
+              ColumnName: fl_date
+      PhysicalTableMap:
+        AllFlightsTable:
+          CustomSql:
+            DataSourceArn: !GetAtt testBaseDataSource.Arn
+            SqlQuery: 'SELECT * FROM test LIMIT 3'
+            Columns:
+              - Name: year
+                Type: INTEGER
+              - Name: rl_date
+                Type: DATETIME
+              - Name: unique_c
+                Type: STRING
+              - Name: fal_num
+                Type: STRING
+              - Name: origin_dcity_name
+                Type: STRING
+              - Name: origin_state_abra
+                Type: STRING
+            Name: test
+      Tags:
+        - Key: test-key
+          Value: test-value
+
+  testRefreshSchedule:
+    Type: 'AWS::QuickSight::RefreshSchedule'
+    Properties:
+      AwsAccountId: !Sub "${AWS::AccountId}"
+      DataSetId: !GetAtt testDataSet.Arn
+      Schedule:
+        ScheduleId: testtest1
+        StartAfterDateTime: "2100-03-15T09:00:01Z"
+        RefreshType: INCREMENTAL_REFRESH
+        ScheduleFrequency:
+          Interval: 
+          TimeZone: 
+Outputs:
+  AwsAccountId:
+    Value:
+      !Sub ${AWS::AccountId}
+    Export:
+      Name: testAccountId
+  testBaseDataSetArn:
+    Value: !GetAtt testDataSet.Arn
+    Export:
+      Name: testDataSetArn
