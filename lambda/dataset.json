@@ -1,0 +1,25 @@
+{
+  "dataSources": [
+    {
+      "dataSource": "ADOBE",
+      "type": "BASIC",
+      "pdsId": "exmple",
+      "sourceType": "genericTable",
+      "description": "Adobe",
+      "host": "",
+      "port": "",
+      "secretManagerArn":,
+      "userName": ,
+      "password": ,
+      "database": ""
+    },
+    {
+      "dataSource": "ATHENA",
+      "type": "BASIC",
+      "pdsId": "exmple",
+      "sourceType": "genericTable",
+      "description": "ATHENA",
+      "WorkGroup": "a",
+      "RoleArn": ""
+    }  ]
+}
